@@ -3,34 +3,98 @@ import { useEffect, useState } from 'react';
 
 function ProjectList() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageNum, setPageNum] = useState<number>(1);
+  const [totalItems, setTotalItems] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
 
   useEffect(() => {
     const fetchProjects = async () => {
       const response = await fetch(
-        'http://localhost:4000/api/water/AllProjects'
+        `https://localhost:5000/api/water/AllProjects?pageSize=${pageSize}&pageNum=${pageNum}`,
+        {
+          credentials: 'include',
+        }
       );
       const data = await response.json();
-      setProjects(data);
+      setProjects(data.projects);
+      setTotalItems(data.totalNumProjects);
+      setTotalPages(Math.ceil(totalItems / pageSize));
     };
     fetchProjects();
-  }, []);
+  }, [pageSize, pageNum, totalItems]);
 
   return (
     <>
       <h1>Water Projects</h1>
       <br />
       {projects.map((p) => (
-        <div id="ProjectCard">
-          <h3>{p.projectName}</h3>
-          <ul>
-            <li>Project Type: {p.projectType}</li>
-            <li>Project Region Program: {p.projectRegionalProgram}</li>
-            <li>Impact: {p.projectImpact} individuals served</li>
-            <li>Project Phase: {p.projectPhase}</li>
-            <li>Project Status: {p.projectFunctionalityStatus}</li>
-          </ul>
+        <div className="card" id="ProjectCard" key={p.projectId}>
+          <h3 className="card-title">{p.projectName}</h3>
+          <div className="card-body">
+            <ul className="list-unstyled">
+              <li>
+                <strong>Project Type: </strong>
+                {p.projectType}
+              </li>
+              <li>
+                <strong>Project Region Program:</strong>{' '}
+                {p.projectRegionalProgram}
+              </li>
+              <li>
+                <strong>Impact:</strong> {p.projectImpact} individuals served
+              </li>
+              <li>
+                <strong>Project Phase:</strong> {p.projectPhase}
+              </li>
+              <li>
+                <strong>Project Status:</strong> {p.projectFunctionalityStatus}
+              </li>
+            </ul>
+          </div>
         </div>
       ))}
+
+      <button
+        disabled={pageNum === 1}
+        className="btn"
+        onClick={() => setPageNum(pageNum - 1)}
+      >
+        Previous
+      </button>
+      {[...Array(totalPages)].map((_, i) => (
+        <button
+          disabled={pageNum === i + 1}
+          className="btn"
+          key={i + 1}
+          onClick={() => setPageNum(i + 1)}
+        >
+          {i + 1}
+        </button>
+      ))}
+      <button
+        className="btn"
+        disabled={pageNum === totalPages}
+        onClick={() => setPageNum(pageNum + 1)}
+      >
+        Next
+      </button>
+
+      <br />
+      <label>
+        Results Per Page:
+        <select
+          value={pageSize}
+          onChange={(p) => {
+            setPageSize(Number(p.target.value));
+            setPageNum(1);
+          }}
+        >
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="20">20</option>
+        </select>
+      </label>
     </>
   );
 }

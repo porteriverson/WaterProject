@@ -13,10 +13,34 @@ public class WaterController : Controller
     
     // GET
     [HttpGet("AllProjects")]
-    public IEnumerable<Project> Get()
+    public IActionResult Get(int pageSize = 5, int pageNum = 1)
     {
-        var returner = _watercontext.Projects.ToList();
-        return returner;
+        string? favProjectType = Request.Cookies["favoriteProjectType"];
+        Console.WriteLine("======> COOKIE <====== \n" + favProjectType);
+        
+        HttpContext.Response.Cookies.Append("favoriteProjectType", "Borehole Well and Hand Pump", 
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.Now.AddMinutes(5)
+            });
+        
+        var returner = _watercontext.Projects
+            .Skip((pageNum - 1) * pageSize)
+        .Take(pageSize)
+        .ToList();
+        
+        var totalNumProjects = _watercontext.Projects.Count();
+
+        var returnObject = new
+        {
+            Projects = returner,
+            TotalNumProjects = totalNumProjects
+        };
+
+        return Ok(returnObject);
     }
     [HttpGet("FunctionalProjects")]
     public IEnumerable<Project> GetFunctionProjects()
