@@ -13,10 +13,10 @@ public class WaterController : Controller
     
     // GET
     [HttpGet("AllProjects")]
-    public IActionResult Get(int pageSize = 5, int pageNum = 1)
+    public IActionResult Get(int pageSize = 5, int pageNum = 1, [FromQuery] List<string>? projectTypes = null)
     {
         string? favProjectType = Request.Cookies["favoriteProjectType"];
-        Console.WriteLine("======> COOKIE <====== \n" + favProjectType);
+        // Console.WriteLine("======> COOKIE <====== \n" + favProjectType);
         
         HttpContext.Response.Cookies.Append("favoriteProjectType", "Borehole Well and Hand Pump", 
             new CookieOptions
@@ -27,12 +27,21 @@ public class WaterController : Controller
                 Expires = DateTime.Now.AddMinutes(5)
             });
         
-        var returner = _watercontext.Projects
+        var query = _watercontext.Projects.AsQueryable();
+
+        if (projectTypes != null && projectTypes.Any())
+        {
+            query = query.Where(p => projectTypes.Contains(p.ProjectType));
+        }
+        
+        var totalNumProjects = query.Count();
+        
+        var returner = query
             .Skip((pageNum - 1) * pageSize)
         .Take(pageSize)
         .ToList();
         
-        var totalNumProjects = _watercontext.Projects.Count();
+        
 
         var returnObject = new
         {
@@ -48,6 +57,17 @@ public class WaterController : Controller
         var functional = _watercontext.Projects
             .Where(p => p.ProjectFunctionalityStatus == "Functional").ToList();
         return functional;
+    }
+
+    [HttpGet("GetProjectTypes")]
+    public IActionResult GetProjectTypes()
+    {
+        var projectTypes = _watercontext.Projects
+            .Select(p =>p.ProjectType)
+            .Distinct()
+            .ToList();
+        
+        return Ok(projectTypes);
     }
 }
 }
