@@ -15,7 +15,7 @@ builder.Services.AddDbContext<WaterDbContext>(options =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend" ,
+    options.AddPolicy("AllowFrontend",
         policy =>
         {
             policy.WithOrigins("http://localhost:3000")
